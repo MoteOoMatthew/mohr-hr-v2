@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { runQuery, getRow, getAll } = require('../database/init');
+const { runQuery, getRow, getRows } = require('../database/init');
 
 const router = express.Router();
 
@@ -55,7 +55,7 @@ router.get('/', verifyToken, async (req, res) => {
 
     sql += ' ORDER BY last_name, first_name';
 
-    const employees = await getAll(sql, params);
+    const employees = await getRows(sql, params);
     res.json(employees); // Return array directly to match frontend expectations
   } catch (error) {
     console.error('Get employees error:', error);
