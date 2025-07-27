@@ -10,7 +10,7 @@
     "build": "npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
     "start": "cd backend && npm start",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "install:all": "npm install && cd backend && npm install",
     "deploy:render": "echo 'Deploy to Render using the render.yaml configuration'"
   },
   "keywords": ["hr", "management", "api", "react", "google-integration"],

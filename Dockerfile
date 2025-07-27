@@ -9,7 +9,8 @@ COPY package*.json ./
 COPY backend/package*.json ./backend/
 
 # Install dependencies
-RUN npm run install:all
+RUN npm install
+RUN cd backend && npm install
 
 # Copy source code
 COPY . .
