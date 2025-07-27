@@ -6,14 +6,20 @@ import Dashboard from './pages/Dashboard'
 import Employees from './pages/Employees'
 import Leave from './pages/Leave'
 import Profile from './pages/Profile'
+import E2EEDemo from './pages/E2EEDemo'
 import ProtectedRoute from './components/ProtectedRoute'
 
+console.log('📱 App component loading...')
+
 function App() {
+  console.log('🎯 App component rendering...')
+  
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gray-50">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/e2ee-demo" element={<E2EEDemo />} />
           <Route path="/" element={
             <ProtectedRoute>
               <Layout />
@@ -29,5 +35,7 @@ function App() {
     </AuthProvider>
   )
 }
+
+console.log('✅ App component loaded')
 
 export default App 

@@ -14,6 +14,7 @@ const Login = () => {
   const navigate = useNavigate()
 
   const handleChange = (e) => {
+    console.log('📝 Form field changed:', e.target.name, e.target.value)
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -22,14 +23,52 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    console.log('🚀 Form submitted with data:', formData)
     setIsLoading(true)
     
-    const result = await login(formData)
-    if (result.success) {
-      navigate('/')
+    try {
+      console.log('🔐 Calling login function...')
+      const result = await login(formData)
+      console.log('📋 Login result:', result)
+      
+      if (result.success) {
+        console.log('✅ Login successful, navigating to dashboard...')
+        navigate('/')
+      } else {
+        console.log('❌ Login failed:', result.error)
+      }
+    } catch (error) {
+      console.error('💥 Login error caught:', error)
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
+
+  // Test function to bypass form submission
+  const testLogin = async () => {
+    console.log('🧪 Testing login with hardcoded credentials...')
+    setIsLoading(true)
+    
+    try {
+      const testCredentials = { username: 'admin', password: 'admin123' }
+      console.log('🔐 Calling login function with test credentials...')
+      const result = await login(testCredentials)
+      console.log('📋 Test login result:', result)
+      
+      if (result.success) {
+        console.log('✅ Test login successful, navigating to dashboard...')
+        navigate('/')
+      } else {
+        console.log('❌ Test login failed:', result.error)
+      }
+    } catch (error) {
+      console.error('💥 Test login error caught:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  console.log('🎨 Login component rendering, current state:', { formData, isLoading, error })
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -126,6 +165,7 @@ const Login = () => {
               type="submit"
               disabled={isLoading}
               className="btn-primary w-full btn-lg"
+              onClick={() => console.log('🔘 Submit button clicked')}
             >
               {isLoading ? (
                 <div className="flex items-center">
@@ -137,6 +177,18 @@ const Login = () => {
               )}
             </button>
           </form>
+
+          {/* Test Login Button */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={testLogin}
+              disabled={isLoading}
+              className="btn-secondary w-full btn-md"
+            >
+              🧪 Test Login (Admin)
+            </button>
+          </div>
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-gray-50 rounded-md">

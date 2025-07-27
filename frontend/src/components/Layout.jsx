@@ -10,7 +10,8 @@ import {
   User, 
   LogOut,
   Bell,
-  Search
+  Search,
+  Shield
 } from 'lucide-react'
 
 const Layout = () => {
@@ -24,6 +25,7 @@ const Layout = () => {
     { name: 'Employees', href: '/employees', icon: Users },
     { name: 'Leave Management', href: '/leave', icon: Calendar },
     { name: 'Profile', href: '/profile', icon: User },
+    { name: 'E2EE Demo', href: '/e2ee-demo', icon: Shield },
   ]
 
   const handleLogout = () => {
