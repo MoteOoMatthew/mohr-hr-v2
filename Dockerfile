@@ -9,11 +9,13 @@ COPY package*.json ./
 COPY backend/package*.json ./backend/
 
 # Install dependencies
-RUN npm install
-RUN cd backend && npm install
+RUN npm run install:all
 
 # Copy source code
 COPY . .
+
+# Build frontend
+RUN npm run build
 
 # Expose port
 EXPOSE 10000
