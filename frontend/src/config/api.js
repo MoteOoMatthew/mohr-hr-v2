@@ -1,7 +1,12 @@
 import axios from 'axios'
 
-// Configure axios defaults
-axios.defaults.baseURL = 'http://localhost:5000'
+// Configure axios defaults based on environment
+const isDevelopment = import.meta.env.DEV
+const baseURL = isDevelopment 
+  ? 'http://localhost:5000' 
+  : 'https://mohr-hr-v2.onrender.com'
+
+axios.defaults.baseURL = baseURL
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 
 // Add request interceptor for logging
