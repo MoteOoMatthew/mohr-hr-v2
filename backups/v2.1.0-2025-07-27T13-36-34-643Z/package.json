@@ -1,0 +1,32 @@
+{
+  "name": "mohr-hr-v2",
+  "version": "2.1.0",
+  "description": "MOHR HR System V2 - Modern Cloud-Native HR Management",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "start": "cd backend && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "deploy:render": "echo 'Deploy to Render using the render.yaml configuration'",
+    "update-version": "node scripts/update-version.js",
+    "backup": "node scripts/backup.js",
+    "version:patch": "npm version patch && npm run update-version",
+    "version:minor": "npm version minor && npm run update-version",
+    "version:major": "npm version major && npm run update-version"
+  },
+  "keywords": ["hr", "management", "api", "react", "google-integration"],
+  "author": "MOHR Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 
