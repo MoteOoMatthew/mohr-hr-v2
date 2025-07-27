@@ -223,7 +223,9 @@ const initDatabase = async () => {
           (err, row) => {
             if (err) {
               console.error('❌ Error checking admin user:', err);
-              reject(err);
+              // Don't reject here, just log and continue
+              console.log('⚠️ Continuing despite admin check error...');
+              resolve();
             } else if (!row) {
               // Create admin user
               db.run(
@@ -233,7 +235,9 @@ const initDatabase = async () => {
                 (err) => {
                   if (err) {
                     console.error('❌ Error creating admin user:', err);
-                    reject(err);
+                    // Don't reject here, just log and continue
+                    console.log('⚠️ Continuing despite admin creation error...');
+                    resolve();
                   } else {
                     console.log('✅ Default admin user created');
                     console.log(`   Username: ${adminUsername}`);
