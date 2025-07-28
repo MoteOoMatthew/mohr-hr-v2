@@ -42,8 +42,8 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy backend from builder stage (including all files)
-COPY --from=backend-builder /app/backend/* ./
+# Copy backend from builder stage (including all files and node_modules)
+COPY --from=backend-builder /app/backend/ ./
 
 # Set production environment
 ENV NODE_ENV=production
