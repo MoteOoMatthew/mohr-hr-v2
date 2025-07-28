@@ -2,9 +2,20 @@ import axios from 'axios'
 
 // Configure axios defaults based on environment
 const isDevelopment = import.meta.env.DEV
-const baseURL = isDevelopment 
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
+// Smart base URL detection
+const baseURL = isDevelopment || isLocalhost
   ? 'http://localhost:5000' 
   : 'https://mohr-hr-v2.onrender.com'
+
+console.log('🔧 API Configuration:', {
+  isDevelopment,
+  isLocalhost,
+  baseURL,
+  env: import.meta.env.MODE,
+  hostname: window.location.hostname
+})
 
 axios.defaults.baseURL = baseURL
 axios.defaults.headers.common['Content-Type'] = 'application/json'

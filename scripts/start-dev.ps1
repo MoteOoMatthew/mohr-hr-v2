@@ -73,7 +73,7 @@ Start-Sleep -Seconds 8
 # Start unified backend server
 Write-Host "Starting Unified Backend Server..." -ForegroundColor Cyan
 Set-Location "backend"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm run dev" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "$env:NODE_ENV='development'; npm run dev" -WindowStyle Normal
 Set-Location ".."
 
 # Wait for backend to start

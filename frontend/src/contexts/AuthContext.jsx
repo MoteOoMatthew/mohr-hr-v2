@@ -148,6 +148,9 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       console.log('✅ User state updated:', userData.username)
       
+      // Temporarily disable E2EE initialization to debug login issue
+      console.log('ℹ️ E2EE initialization temporarily disabled for debugging');
+      /*
       // Initialize E2EE if supported and user has salt (non-blocking)
       if (userData.salt && e2eeService && e2eeService.isSupported()) {
         console.log('🔒 Attempting E2EE initialization with login password...')
@@ -165,11 +168,14 @@ export const AuthProvider = ({ children }) => {
             ...prev,
             error: 'E2EE initialization failed - continuing without encryption'
           }));
+          // Don't let E2EE failure prevent login
         }
       } else {
         console.log('ℹ️ E2EE not available or not needed');
       }
+      */
       
+      console.log('🎉 Login function completed successfully, returning success');
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.error || 'Login failed';

@@ -23,11 +23,15 @@ const Login = () => {
     setError('')
 
     try {
+      console.log('🔍 Login component: Calling login function...')
       const result = await login(formData)
+      console.log('🔍 Login component: Received result:', result)
       
       if (result.success) {
+        console.log('✅ Login component: Login successful, navigating to /')
         navigate('/')
       } else {
+        console.log('❌ Login component: Login failed:', result.error)
         setError(result.error || 'Login failed')
       }
     } catch (error) {

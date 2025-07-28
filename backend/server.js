@@ -14,18 +14,23 @@ const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-}));
+// Security middleware with environment-aware CSP
+const cspConfig = isDevelopment 
+  ? { contentSecurityPolicy: false }  // Disable CSP in development
+  : {
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'", "https://mohr-hr-v2.onrender.com"], // Allow API calls to production
+        },
+      },
+    };
+
+app.use(helmet(cspConfig));
 
 // Rate limiting
 const limiter = rateLimit({
