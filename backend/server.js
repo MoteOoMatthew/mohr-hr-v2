@@ -152,42 +152,84 @@ app.get('/api/health', (req, res) => {
 // Frontend serving logic
 const serveFrontend = () => {
   if (isDevelopment) {
-    // In development, proxy to Vite dev server
+    // In development, try to proxy to Vite dev server, fallback to static files
     const { createProxyMiddleware } = require('http-proxy-middleware');
-    app.use('/', createProxyMiddleware({
-      target: 'http://localhost:3001',
-      changeOrigin: true,
-      ws: true, // Enable WebSocket proxy for HMR
-      logLevel: 'silent'
-    }));
+    
+    // Check if Vite dev server is running
+    const http = require('http');
+    const checkViteServer = () => {
+      return new Promise((resolve) => {
+        const req = http.request({
+          hostname: 'localhost',
+          port: 3001,
+          path: '/',
+          method: 'GET',
+          timeout: 2000
+        }, (res) => {
+          resolve(true);
+        });
+        
+        req.on('error', () => {
+          resolve(false);
+        });
+        
+        req.on('timeout', () => {
+          req.destroy();
+          resolve(false);
+        });
+        
+        req.end();
+      });
+    };
+    
+    // Try to proxy to Vite, fallback to static files
+    checkViteServer().then(viteRunning => {
+      if (viteRunning) {
+        console.log('🔧 Development mode: Frontend proxied to Vite dev server');
+        app.use('/', createProxyMiddleware({
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          ws: true, // Enable WebSocket proxy for HMR
+          logLevel: 'silent'
+        }));
+      } else {
+        console.log('⚠️  Vite dev server not running, serving static files');
+        serveStaticFiles();
+      }
+    });
   } else {
     // In production, serve static files from backend/public
-    const publicPath = path.join(__dirname, 'public');
-    if (fs.existsSync(publicPath)) {
-      app.use(express.static(publicPath));
-      
-      // Catch all handler: send back React's index.html file
-      app.get('*', (req, res) => {
-        res.sendFile(path.join(publicPath, 'index.html'));
+    serveStaticFiles();
+  }
+};
+
+// Helper function to serve static files
+const serveStaticFiles = () => {
+  const publicPath = path.join(__dirname, 'public');
+  if (fs.existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+    
+    // Catch all handler: send back React's index.html file
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(publicPath, 'index.html'));
+    });
+  } else {
+    // Fallback for API-only deployment
+    app.get('/', (req, res) => {
+      res.json({
+        message: 'MOHR HR System API V2',
+        version: '2.0.0',
+        status: 'running',
+        endpoints: {
+          health: '/api/health',
+          auth: '/api/auth',
+          users: '/api/users',
+          employees: '/api/employees',
+          leave: '/api/leave',
+          google: '/api/google'
+        }
       });
-    } else {
-      // Fallback for API-only deployment
-      app.get('/', (req, res) => {
-        res.json({
-          message: 'MOHR HR System API V2',
-          version: '2.0.0',
-          status: 'running',
-          endpoints: {
-            health: '/api/health',
-            auth: '/api/auth',
-            users: '/api/users',
-            employees: '/api/employees',
-            leave: '/api/leave',
-            google: '/api/google'
-          }
-        });
-      });
-    }
+    });
   }
 };
 

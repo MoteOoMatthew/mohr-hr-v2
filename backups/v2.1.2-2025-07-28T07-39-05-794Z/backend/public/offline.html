@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOHR HR System - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .offline-container {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .offline-icon {
+            width: 80px;
+            height: 80px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #e74c3c;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .features {
+            text-align: left;
+            margin: 2rem 0;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .feature-icon {
+            width: 20px;
+            height: 20px;
+            background: #27ae60;
+            border-radius: 50%;
+            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .retry-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 1rem 0.5rem;
+        }
+
+        .retry-button:hover {
+            background: #2980b9;
+        }
+
+        .offline-button {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 1rem 0.5rem;
+        }
+
+        .offline-button:hover {
+            background: #7f8c8d;
+        }
+
+        .connection-info {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #ecf0f1;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .connection-info h3 {
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .connection-info p {
+            color: #7f8c8d;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 600px) {
+            .offline-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        
+        <h1>You're Offline</h1>
+        <p class="subtitle">MOHR HR System is currently unavailable due to network issues.</p>
+        
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            No Internet Connection
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">✓</div>
+                <span>Your data is safely encrypted and stored locally</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">✓</div>
+                <span>Changes will sync automatically when connection is restored</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">✓</div>
+                <span>Critical HR functions remain accessible offline</span>
+            </div>
+        </div>
+
+        <button class="retry-button" onclick="retryConnection()">
+            🔄 Try Again
+        </button>
+        
+        <button class="offline-button" onclick="continueOffline()">
+            📱 Continue Offline
+        </button>
+
+        <div class="connection-info">
+            <h3>Connection Status</h3>
+            <p id="connection-details">
+                Checking network status...
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Check connection status
+        function checkConnection() {
+            const details = document.getElementById('connection-details');
+            
+            if (navigator.onLine) {
+                details.innerHTML = `
+                    <strong>✅ Online</strong><br>
+                    Internet connection detected. Try refreshing the page.
+                `;
+                document.querySelector('.status-indicator').innerHTML = `
+                    <div class="status-dot" style="background: #27ae60;"></div>
+                    Connected
+                `;
+            } else {
+                details.innerHTML = `
+                    <strong>❌ Offline</strong><br>
+                    No internet connection available. This may be due to:<br>
+                    • Network maintenance<br>
+                    • Government restrictions<br>
+                    • Infrastructure issues
+                `;
+            }
+        }
+
+        // Retry connection
+        function retryConnection() {
+            const button = document.querySelector('.retry-button');
+            button.innerHTML = '🔄 Checking...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                if (navigator.onLine) {
+                    window.location.reload();
+                } else {
+                    button.innerHTML = '🔄 Try Again';
+                    button.disabled = false;
+                    checkConnection();
+                }
+            }, 2000);
+        }
+
+        // Continue offline
+        function continueOffline() {
+            // Try to load cached version of the app
+            window.location.href = '/';
+        }
+
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            checkConnection();
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        });
+
+        window.addEventListener('offline', () => {
+            checkConnection();
+        });
+
+        // Check connection on load
+        checkConnection();
+
+        // Auto-retry every 30 seconds
+        setInterval(() => {
+            if (navigator.onLine) {
+                window.location.reload();
+            }
+        }, 30000);
+    </script>
+</body>
+</html> 
