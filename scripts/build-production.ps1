@@ -55,6 +55,6 @@ Write-Host "📦 Frontend built and copied to backend/public" -ForegroundColor C
 Write-Host "🚀 Ready for production deployment" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "To start production server:" -ForegroundColor Yellow
-Write-Host "   cd backend && npm start" -ForegroundColor White
+Write-Host "   cd backend; npm start" -ForegroundColor White
 Write-Host ""
 Write-Host "Production server will serve both API and frontend from port 5000" -ForegroundColor Cyan 

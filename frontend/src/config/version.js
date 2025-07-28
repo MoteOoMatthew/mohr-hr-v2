@@ -1,7 +1,7 @@
 // Version configuration for MOHR HR System
 // This file is automatically updated when the package.json version changes
 
-export const APP_VERSION = '2.1.2';
+export const APP_VERSION = '2.1.3';
 export const APP_NAME = 'MOHR HR System';
 export const APP_DESCRIPTION = 'Modern Cloud-Native HR Management';
 
