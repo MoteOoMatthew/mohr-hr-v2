@@ -24,14 +24,13 @@ FROM node:18-alpine AS backend-builder
 WORKDIR /app
 
 # Copy backend package files
-COPY backend/package*.json ./backend/
+COPY backend/package*.json ./
 
 # Install backend dependencies
-WORKDIR /app/backend
 RUN npm install
 
 # Copy backend source code
-COPY backend/ ./backend/
+COPY backend/ ./
 
 # Copy frontend build to backend public directory
 COPY --from=frontend-builder /app/frontend/dist ./public
@@ -43,7 +42,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy backend from builder stage (including all files and node_modules)
-COPY --from=backend-builder /app/backend/ ./
+COPY --from=backend-builder /app/ ./
 
 # Set production environment
 ENV NODE_ENV=production
