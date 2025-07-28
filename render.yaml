@@ -3,8 +3,8 @@ services:
     name: mohr-hr-v2
     env: node
     plan: free
-    buildCommand: npm install && cd backend && npm install && cd ../frontend && npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install && npm run build:linux
+    startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -22,7 +22,5 @@ services:
         value: "*"
       - key: GOOGLE_CALLBACK_URL
         value: https://mohr-hr-v2.onrender.com/auth/google/callback
-      - key: FRONTEND_URL
-        value: https://mohr-hr-v2.onrender.com
     healthCheckPath: /api/health
     autoDeploy: true 
