@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "schedule": "0 2 * * *",
+  "password": "mohr-backup-2024",
+  "keepLocalBackups": 7,
+  "keepCloudBackups": 30,
+  "uploadToCloud": true,
+  "compressionLevel": 9
+}
