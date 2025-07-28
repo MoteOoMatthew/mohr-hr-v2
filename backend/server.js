@@ -16,7 +16,21 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Security middleware with environment-aware CSP
 const cspConfig = isDevelopment 
-  ? { contentSecurityPolicy: false }  // Disable CSP in development
+  ? { 
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
+      crossOriginResourcePolicy: false,
+      dnsPrefetchControl: false,
+      frameguard: false,
+      hidePoweredBy: false,
+      hsts: false,
+      ieNoOpen: false,
+      noSniff: false,
+      permittedCrossDomainPolicies: false,
+      referrerPolicy: false,
+      xssFilter: false
+    }  // Disable all security headers in development
   : {
       contentSecurityPolicy: {
         directives: {
@@ -25,7 +39,7 @@ const cspConfig = isDevelopment
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
           scriptSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", "data:", "https:"],
-          connectSrc: ["'self'", "https://mohr-hr-v2.onrender.com"], // Allow API calls to production
+          connectSrc: ["'self'", "https://mohr-hr-v2.onrender.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com"], // Allow API calls to production and fonts
         },
       },
     };
@@ -164,7 +178,7 @@ const serveFrontend = () => {
           port: 3001,
           path: '/',
           method: 'GET',
-          timeout: 2000
+          timeout: 1000
         }, (res) => {
           resolve(true);
         });
@@ -196,6 +210,9 @@ const serveFrontend = () => {
         console.log('⚠️  Vite dev server not running, serving static files');
         serveStaticFiles();
       }
+    }).catch(() => {
+      console.log('⚠️  Vite server check failed, serving static files');
+      serveStaticFiles();
     });
   } else {
     // In production, serve static files from backend/public
@@ -207,7 +224,18 @@ const serveFrontend = () => {
 const serveStaticFiles = () => {
   const publicPath = path.join(__dirname, 'public');
   if (fs.existsSync(publicPath)) {
-    app.use(express.static(publicPath));
+    // Serve static files with proper MIME types
+    app.use(express.static(publicPath, {
+      setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css');
+        } else if (path.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.svg')) {
+          res.setHeader('Content-Type', 'image/svg+xml');
+        }
+      }
+    }));
     
     // Catch all handler: send back React's index.html file
     app.get('*', (req, res) => {

@@ -11,10 +11,8 @@ const API_CACHE = 'mohr-hr-api-v1';
 const CACHE_FILES = [
   '/',
   '/index.html',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/manifest.json',
-  '/favicon.ico'
+  '/radish-favicon.svg'
 ];
 
 // API endpoints to cache
@@ -74,13 +72,22 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Skip external resources completely to avoid CSP issues
+  if (url.hostname !== location.hostname && 
+      !url.hostname.includes('localhost') && 
+      !url.hostname.includes('127.0.0.1')) {
+    // For external resources, just pass through to network without caching
+    event.respondWith(fetch(request));
+    return;
+  }
+
   // Handle API requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleApiRequest(request));
     return;
   }
 
-  // Handle static assets
+  // Handle static assets (only local ones)
   if (request.method === 'GET') {
     event.respondWith(handleStaticRequest(request));
     return;
@@ -104,12 +111,14 @@ async function handleApiRequest(request) {
     
     return response;
   } catch (error) {
-    console.log('Network failed, trying cache:', request.url);
+    console.log('API request failed, trying cache:', request.url);
     
-    // Try cache
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
+    // Try cache for GET requests
+    if (request.method === 'GET') {
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
     }
     
     // Return offline response for critical endpoints
@@ -117,20 +126,11 @@ async function handleApiRequest(request) {
       return createOfflineResponse(request);
     }
     
-    // For non-critical endpoints, return error
-    return new Response(JSON.stringify({
-      error: 'Offline mode',
-      message: 'This request requires an internet connection',
-      endpoint: request.url
-    }), {
-      status: 503,
-      statusText: 'Service Unavailable - Offline',
-      headers: { 'Content-Type': 'application/json' }
-    });
+    throw error;
   }
 }
 
-// Handle static asset requests
+// Handle static requests with caching
 async function handleStaticRequest(request) {
   try {
     // Try cache first for better performance
@@ -214,8 +214,6 @@ function createOfflineResponse(request) {
 
 // Get cached privilege levels
 function getCachedPrivilegeLevels() {
-  // This would typically come from IndexedDB or localStorage
-  // For now, return a basic structure
   return [
     { level: 1, name: 'View Only', type: 'standard' },
     { level: 2, name: 'Basic User', type: 'standard' },
@@ -243,21 +241,25 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// Sync pending requests when connection is restored
+// Sync pending requests when back online
 async function syncPendingRequests() {
   try {
-    // Get pending requests from IndexedDB or localStorage
     const pendingRequests = await getPendingRequests();
     
-    for (const request of pendingRequests) {
+    for (const requestData of pendingRequests) {
       try {
-        const response = await fetch(request.url, request.options);
+        const response = await fetch(requestData.url, {
+          method: requestData.method,
+          headers: requestData.headers,
+          body: requestData.body
+        });
+        
         if (response.ok) {
-          await removePendingRequest(request.id);
-          console.log('Synced request successfully:', request.id);
+          await removePendingRequest(requestData.id);
+          console.log('Successfully synced request:', requestData.url);
         }
       } catch (error) {
-        console.error('Failed to sync request:', request.id, error);
+        console.log('Failed to sync request:', requestData.url, error);
       }
     }
   } catch (error) {
@@ -265,70 +267,49 @@ async function syncPendingRequests() {
   }
 }
 
-// Get pending requests from storage
+// Get pending requests from IndexedDB
 async function getPendingRequests() {
   // This would typically use IndexedDB
   // For now, return empty array
   return [];
 }
 
-// Remove pending request from storage
+// Remove pending request from IndexedDB
 async function removePendingRequest(requestId) {
   // This would typically use IndexedDB
   console.log('Removing pending request:', requestId);
 }
 
-// Handle messages from main thread
-self.addEventListener('message', (event) => {
-  const { type, data } = event.data;
-  
-  switch (type) {
-    case 'QUEUE_REQUEST':
-      queueRequest(data.request);
-      break;
-    case 'SYNC_REQUEST':
-      syncPendingRequests();
-      break;
-    case 'CLEAR_CACHE':
-      clearCache();
-      break;
-    default:
-      console.log('Unknown message type:', type);
-  }
-});
-
 // Queue request for later sync
 async function queueRequest(request) {
-  try {
-    // Store request in IndexedDB for later sync
-    console.log('Queuing request for later sync:', request.id);
-    
-    // Notify main thread
-    self.clients.matchAll().then((clients) => {
-      clients.forEach((client) => {
-        client.postMessage({
-          type: 'REQUEST_QUEUED',
-          requestId: request.id
-        });
-      });
-    });
-  } catch (error) {
-    console.error('Failed to queue request:', error);
-  }
+  const requestData = {
+    id: Date.now().toString(),
+    url: request.url,
+    method: request.method,
+    headers: Object.fromEntries(request.headers.entries()),
+    body: request.method !== 'GET' ? await request.clone().text() : null,
+    timestamp: Date.now()
+  };
+  
+  // This would typically use IndexedDB
+  console.log('Queued request for later sync:', requestData.url);
 }
 
 // Clear all caches
 async function clearCache() {
-  try {
-    const cacheNames = await caches.keys();
-    await Promise.all(
-      cacheNames.map((cacheName) => caches.delete(cacheName))
-    );
-    console.log('All caches cleared');
-  } catch (error) {
-    console.error('Failed to clear caches:', error);
-  }
+  const cacheNames = await caches.keys();
+  await Promise.all(
+    cacheNames.map(cacheName => caches.delete(cacheName))
+  );
+  console.log('All caches cleared');
 }
+
+// Handle cache clearing
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(clearCache());
+  }
+});
 
 // Push notification handling
 self.addEventListener('push', (event) => {
@@ -336,8 +317,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: 'MOHR HR System - New update available',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/radish-favicon.svg',
+    badge: '/radish-favicon.svg',
     tag: 'mohr-update',
     data: {
       url: '/'
