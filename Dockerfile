@@ -12,7 +12,7 @@ WORKDIR /app/frontend
 RUN npm install
 
 # Copy frontend source code
-COPY frontend/ ./frontend/
+COPY frontend/ ./
 
 # Build frontend for production
 RUN npm run build
