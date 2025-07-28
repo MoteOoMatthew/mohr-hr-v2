@@ -1,6 +1,6 @@
 {
   "name": "mohr-hr-v2",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "MOHR HR System V2 - Modern Cloud-Native HR Management",
   "main": "backend/server.js",
   "scripts": {
@@ -19,7 +19,13 @@
     "version:minor": "npm version minor && npm run update-version",
     "version:major": "npm version major && npm run update-version"
   },
-  "keywords": ["hr", "management", "api", "react", "google-integration"],
+  "keywords": [
+    "hr",
+    "management",
+    "api",
+    "react",
+    "google-integration"
+  ],
   "author": "MOHR Team",
   "license": "MIT",
   "engines": {
