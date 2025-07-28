@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOHR HR System - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #10b981;
+        }
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #ef4444;
+        }
+        .info {
+            background: #f3f4f6;
+            color: #1f2937;
+            border: 1px solid #d1d5db;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .test-results {
+            margin-top: 20px;
+        }
+        .test-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 MOHR HR System - Test Page</h1>
+        <p>This page helps verify that the MOHR HR System is working correctly.</p>
+        
+        <div id="status"></div>
+        
+        <button onclick="testServer()">Test Server Connection</button>
+        <button onclick="testStaticFiles()">Test Static Files</button>
+        <button onclick="testAPI()">Test API Endpoints</button>
+        <button onclick="openApp()">Open MOHR HR App</button>
+        <button onclick="clearCache()">Clear Browser Cache</button>
+        
+        <div class="test-results" id="testResults"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function addTestResult(test, result, details = '') {
+            const resultsDiv = document.getElementById('testResults');
+            const resultClass = result === 'PASS' ? 'success' : 'error';
+            const resultText = result === 'PASS' ? '✅ PASS' : '❌ FAIL';
+            
+            resultsDiv.innerHTML += `
+                <div class="test-item ${resultClass}">
+                    <strong>${test}:</strong> ${resultText}
+                    ${details ? `<br><small>${details}</small>` : ''}
+                </div>
+            `;
+        }
+
+        async function testServer() {
+            showStatus('Testing server connection...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    addTestResult('Server Connection', 'PASS', `Status: ${data.status}`);
+                    showStatus('✅ Server is running and responding!', 'success');
+                } else {
+                    addTestResult('Server Connection', 'FAIL', `HTTP ${response.status}`);
+                    showStatus('❌ Server responded with error', 'error');
+                }
+            } catch (error) {
+                addTestResult('Server Connection', 'FAIL', error.message);
+                showStatus('❌ Cannot connect to server', 'error');
+            }
+        }
+
+        async function testStaticFiles() {
+            showStatus('Testing static files...', 'info');
+            
+            const files = [
+                '/assets/index-BIUN4tiw.js',
+                '/assets/index-eKzpyeJ3.css',
+                '/radish-favicon.svg',
+                '/manifest.json'
+            ];
+            
+            let passed = 0;
+            let failed = 0;
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(`http://localhost:5000${file}`);
+                    if (response.ok) {
+                        addTestResult(`Static File: ${file}`, 'PASS');
+                        passed++;
+                    } else {
+                        addTestResult(`Static File: ${file}`, 'FAIL', `HTTP ${response.status}`);
+                        failed++;
+                    }
+                } catch (error) {
+                    addTestResult(`Static File: ${file}`, 'FAIL', error.message);
+                    failed++;
+                }
+            }
+            
+            if (failed === 0) {
+                showStatus(`✅ All static files are accessible! (${passed}/${passed})`, 'success');
+            } else {
+                showStatus(`⚠️ Some static files failed (${passed}/${passed + failed})`, 'error');
+            }
+        }
+
+        async function testAPI() {
+            showStatus('Testing API endpoints...', 'info');
+            
+            const endpoints = [
+                '/api/health',
+                '/api/auth/me'
+            ];
+            
+            let passed = 0;
+            let failed = 0;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`http://localhost:5000${endpoint}`);
+                    if (response.ok || response.status === 401) { // 401 is expected for /auth/me without auth
+                        addTestResult(`API: ${endpoint}`, 'PASS', `HTTP ${response.status}`);
+                        passed++;
+                    } else {
+                        addTestResult(`API: ${endpoint}`, 'FAIL', `HTTP ${response.status}`);
+                        failed++;
+                    }
+                } catch (error) {
+                    addTestResult(`API: ${endpoint}`, 'FAIL', error.message);
+                    failed++;
+                }
+            }
+            
+            if (failed === 0) {
+                showStatus(`✅ All API endpoints are working! (${passed}/${passed})`, 'success');
+            } else {
+                showStatus(`⚠️ Some API endpoints failed (${passed}/${passed + failed})`, 'error');
+            }
+        }
+
+        function openApp() {
+            window.open('http://localhost:5000', '_blank');
+        }
+
+        async function clearCache() {
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                }
+                
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+                
+                showStatus('✅ Browser cache and service worker cleared!', 'success');
+            } catch (error) {
+                showStatus(`❌ Error clearing cache: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            showStatus('🔍 Running initial tests...', 'info');
+            setTimeout(() => {
+                testServer();
+                setTimeout(() => {
+                    testStaticFiles();
+                }, 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache - MOHR HR System</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Cache Management</h1>
+        <p>Clear all cached data and service worker to resolve issues.</p>
+        
+        <div id="status" class="status info">
+            Ready to clear cache...
+        </div>
+        
+        <div>
+            <button onclick="clearAllCache()" id="clearBtn">Clear All Cache</button>
+            <button onclick="unregisterSW()" id="swBtn">Unregister Service Worker</button>
+            <button onclick="reloadPage()" id="reloadBtn">Reload Page</button>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function clearAllCache() {
+            const btn = document.getElementById('clearBtn');
+            btn.disabled = true;
+            
+            try {
+                log('Starting cache clearing process...');
+                updateStatus('Clearing cache...', 'info');
+                
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    log(`Found ${cacheNames.length} caches to clear`);
+                    
+                    for (const cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        log(`Deleted cache: ${cacheName}`);
+                    }
+                }
+                
+                // Clear localStorage
+                localStorage.clear();
+                log('Cleared localStorage');
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                log('Cleared sessionStorage');
+                
+                // Clear IndexedDB
+                if ('indexedDB' in window) {
+                    const databases = await indexedDB.databases();
+                    for (const db of databases) {
+                        indexedDB.deleteDatabase(db.name);
+                        log(`Deleted IndexedDB: ${db.name}`);
+                    }
+                }
+                
+                updateStatus('Cache cleared successfully!', 'success');
+                log('Cache clearing completed successfully');
+                
+            } catch (error) {
+                log(`Error clearing cache: ${error.message}`);
+                updateStatus('Error clearing cache', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function unregisterSW() {
+            const btn = document.getElementById('swBtn');
+            btn.disabled = true;
+            
+            try {
+                log('Unregistering service workers...');
+                updateStatus('Unregistering service workers...', 'info');
+                
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    log(`Found ${registrations.length} service worker registrations`);
+                    
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                        log(`Unregistered service worker: ${registration.scope}`);
+                    }
+                }
+                
+                updateStatus('Service workers unregistered!', 'success');
+                log('Service worker unregistration completed');
+                
+            } catch (error) {
+                log(`Error unregistering service workers: ${error.message}`);
+                updateStatus('Error unregistering service workers', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function reloadPage() {
+            log('Reloading page...');
+            updateStatus('Reloading page...', 'info');
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 1000);
+        }
+
+        // Auto-clear on page load
+        window.addEventListener('load', async () => {
+            log('Page loaded, checking for service workers...');
+            
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`Found ${registrations.length} active service worker registrations`);
+                
+                for (const registration of registrations) {
+                    log(`Service Worker: ${registration.scope} (${registration.active ? 'Active' : 'Inactive'})`);
+                }
+            }
+            
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                log(`Found ${cacheNames.length} caches`);
+                cacheNames.forEach(name => log(`  - ${name}`));
+            }
+        });
+    </script>
+</body>
+</html> 

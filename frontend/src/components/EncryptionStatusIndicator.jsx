@@ -13,6 +13,7 @@ const EncryptionStatusIndicator = () => {
   });
   const [showNotification, setShowNotification] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
     // Get initial status
@@ -62,6 +63,7 @@ const EncryptionStatusIndicator = () => {
       autoMode: status.autoMode !== false,
       initialized: status.initialized || false
     });
+    setLastUpdate(new Date());
   };
 
   const getStatusIcon = () => {
@@ -71,7 +73,7 @@ const EncryptionStatusIndicator = () => {
 
     switch (encryptionStatus.mode) {
       case 'e2ee':
-        return <ShieldCheck className="w-5 h-5 text-green-500" />;
+        return <ShieldCheck className="w-5 h-5 text-green-500 animate-pulse" />;
       case 'tls':
         return <Shield className="w-5 h-5 text-blue-500" />;
       default:
@@ -101,9 +103,9 @@ const EncryptionStatusIndicator = () => {
 
     switch (encryptionStatus.mode) {
       case 'e2ee':
-        return 'text-green-600 bg-green-50 border-green-200';
+        return 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100 transition-colors';
       case 'tls':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
+        return 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors';
       default:
         return 'text-gray-500 bg-gray-100 border-gray-200';
     }
@@ -130,21 +132,22 @@ const EncryptionStatusIndicator = () => {
     }
 
     const modeText = encryptionStatus.mode === 'e2ee' 
-      ? 'End-to-End Encryption' 
-      : 'Transport Layer Security';
+      ? 'End-to-End Encryption (Maximum Security)' 
+      : 'Transport Layer Security (Standard Security)';
     
-    const networkText = `Network: ${encryptionStatus.networkSpeed}`;
+    const networkText = `Network Speed: ${encryptionStatus.networkSpeed}`;
     const autoText = encryptionStatus.autoMode ? 'Auto-switching enabled' : 'Manual mode';
+    const updateText = `Last updated: ${lastUpdate.toLocaleTimeString()}`;
     
-    return `${modeText}\n${networkText}\n${autoText}`;
+    return `${modeText}\n${networkText}\n${autoText}\n${updateText}`;
   };
 
   return (
     <>
       {/* Status Indicator */}
-      <div className="relative">
+      <div className="relative group">
         <div
-          className={`flex items-center space-x-2 px-3 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-colors ${getStatusColor()}`}
+          className={`flex items-center space-x-2 px-3 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-all duration-200 hover:shadow-md ${getStatusColor()}`}
           title={getTooltipText()}
         >
           {getStatusIcon()}
@@ -158,11 +161,17 @@ const EncryptionStatusIndicator = () => {
             </div>
           )}
         </div>
+        
+        {/* Enhanced tooltip on hover */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-pre-line z-50 max-w-xs">
+          {getTooltipText()}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+        </div>
       </div>
 
       {/* Notification */}
       {showNotification && notification && (
-        <div className="fixed top-4 right-4 z-50 max-w-sm">
+        <div className="fixed top-4 right-4 z-50 max-w-sm animate-in slide-in-from-right duration-300">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0">

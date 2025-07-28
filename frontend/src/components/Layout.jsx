@@ -141,29 +141,16 @@ const Layout = () => {
             })}
           </nav>
           <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 space-y-2 mb-8">
-            {/* User info */}
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user?.name || user?.username || 'User'}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user?.role || 'User'}
-                </p>
-              </div>
-            </div>
+            {/* Regular Logout button */}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded-md transition-colors"
+            >
+              <LogOut size={20} className="mr-3" />
+              Logout
+            </button>
 
-            {/* Encryption Status Indicator */}
-            <EncryptionStatusIndicator />
-
-            {/* Logout button */}
+            {/* Emergency Logout button */}
             <button
               onClick={handleEmergencyLogout}
               className="w-full flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"

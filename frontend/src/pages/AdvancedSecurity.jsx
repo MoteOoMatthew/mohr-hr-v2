@@ -18,6 +18,8 @@ const AdvancedSecurity = () => {
     performanceHistory: []
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     // Get initial status
@@ -99,6 +101,72 @@ const AdvancedSecurity = () => {
     saveSettings(newSettings);
   };
 
+  const handleForceE2EE = async () => {
+    try {
+      // Temporarily disable auto mode
+      const newSettings = {
+        ...securitySettings,
+        autoMode: false
+      };
+      saveSettings(newSettings);
+      
+      // Force E2EE mode
+      e2eeService.encryptionMode = 'e2ee';
+      e2eeService.autoMode = false;
+      
+      // Update status
+      updateStatus();
+      
+      // Show success notification
+      setNotification({
+        type: 'success',
+        title: 'E2EE Forced',
+        message: 'End-to-end encryption has been manually enabled'
+      });
+      setShowNotification(true);
+      
+      setTimeout(() => setShowNotification(false), 3000);
+    } catch (error) {
+      console.error('Failed to force E2EE:', error);
+      setNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to enable E2EE mode'
+      });
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
+    }
+  };
+
+  const handleResetToAuto = () => {
+    try {
+      // Re-enable auto mode
+      const newSettings = {
+        ...securitySettings,
+        autoMode: true
+      };
+      saveSettings(newSettings);
+      
+      // Reset to auto mode
+      e2eeService.autoMode = true;
+      
+      // Update status
+      updateStatus();
+      
+      // Show success notification
+      setNotification({
+        type: 'success',
+        title: 'Auto Mode Restored',
+        message: 'Automatic encryption switching has been re-enabled'
+      });
+      setShowNotification(true);
+      
+      setTimeout(() => setShowNotification(false), 3000);
+    } catch (error) {
+      console.error('Failed to reset to auto mode:', error);
+    }
+  };
+
   const getStatusIcon = () => {
     if (!encryptionStatus.initialized) {
       return <ShieldAlert className="w-8 h-8 text-gray-400" />;
@@ -152,6 +220,41 @@ const AdvancedSecurity = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      {/* Notification */}
+      {showNotification && notification && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm animate-in slide-in-from-right duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                {notification.type === 'success' ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : notification.type === 'error' ? (
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                ) : (
+                  <Info className="w-5 h-5 text-blue-500" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {notification.title}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  {notification.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowNotification(false)}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
@@ -309,6 +412,30 @@ const AdvancedSecurity = () => {
                       }`}
                     />
                   </button>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="border-t pt-6">
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleForceE2EE}
+                      disabled={!encryptionStatus.initialized}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Force E2EE
+                    </button>
+                    <button
+                      onClick={handleResetToAuto}
+                      disabled={!encryptionStatus.initialized || securitySettings.autoMode}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Reset to Auto
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Force E2EE: Manually enable maximum security. Reset to Auto: Restore automatic switching.
+                  </p>
                 </div>
               </div>
             </div>

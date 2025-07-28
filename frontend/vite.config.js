@@ -28,8 +28,20 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           utils: ['axios', 'clsx', 'tailwind-merge']
-        }
+        },
+        // Ensure consistent file naming
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
-    }
+    },
+    // Ensure assets are properly hashed
+    assetsInlineLimit: 4096,
+    // Generate manifest for service worker
+    manifest: true
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom']
   }
 }) 

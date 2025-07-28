@@ -82,14 +82,23 @@ export const AuthProvider = ({ children }) => {
       }
       
       console.log('🔐 Initializing E2EE service...')
-      await e2eeService.initialize(password, salt)
+      const success = await e2eeService.initialize(password, salt)
       
-      setE2eeStatus(prev => ({
-        ...prev,
-        initialized: true,
-        error: null
-      }))
-      console.log('✅ E2EE initialized successfully for user')
+      if (success) {
+        setE2eeStatus(prev => ({
+          ...prev,
+          initialized: true,
+          error: null
+        }))
+        console.log('✅ E2EE initialized successfully for user')
+      } else {
+        setE2eeStatus(prev => ({
+          ...prev,
+          initialized: true,
+          error: 'E2EE initialization failed - using TLS fallback'
+        }))
+        console.log('⚠️ E2EE initialization failed - using TLS fallback')
+      }
     } catch (error) {
       console.error('❌ E2EE initialization failed:', error)
       setE2eeStatus(prev => ({
@@ -151,24 +160,23 @@ export const AuthProvider = ({ children }) => {
       // Automatically initialize E2EE if supported and user has salt
       if (userData.salt && e2eeService && e2eeService.isSupported()) {
         console.log('🔒 Automatically initializing E2EE service...')
+        console.log('🔑 User salt:', userData.salt ? 'Present' : 'Missing')
+        console.log('🌐 E2EE supported:', e2eeService.isSupported())
         try {
-          await e2eeService.initialize(credentials.password, userData.salt);
-          setE2eeStatus(prev => ({
-            ...prev,
-            initialized: true,
-            error: null
-          }));
+          await initializeE2EE(credentials.password, userData.salt);
           console.log('✅ E2EE automatically initialized successfully');
         } catch (e2eeError) {
           console.warn('⚠️ E2EE initialization failed, continuing without encryption:', e2eeError);
-          setE2eeStatus(prev => ({
-            ...prev,
-            error: 'E2EE initialization failed - continuing without encryption'
-          }));
           // Don't let E2EE failure prevent login
         }
       } else {
         console.log('ℹ️ E2EE not available or not needed');
+        if (!userData.salt) {
+          console.log('⚠️ User has no salt for E2EE initialization');
+        }
+        if (!e2eeService.isSupported()) {
+          console.log('⚠️ E2EE not supported in this browser');
+        }
       }
       
       console.log('🎉 Login function completed successfully, returning success');

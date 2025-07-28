@@ -1,0 +1,31 @@
+{
+  "_router-AmOfzmdZ.js": {
+    "file": "assets/router-AmOfzmdZ.js",
+    "name": "router",
+    "imports": [
+      "_vendor-Gm9i_4Ku.js"
+    ]
+  },
+  "_utils-NIGUFBhG.js": {
+    "file": "assets/utils-NIGUFBhG.js",
+    "name": "utils"
+  },
+  "_vendor-Gm9i_4Ku.js": {
+    "file": "assets/vendor-Gm9i_4Ku.js",
+    "name": "vendor"
+  },
+  "index.html": {
+    "file": "assets/index-mv9EP_hU.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_vendor-Gm9i_4Ku.js",
+      "_router-AmOfzmdZ.js",
+      "_utils-NIGUFBhG.js"
+    ],
+    "css": [
+      "assets/index-a1ovRXV5.css"
+    ]
+  }
+}

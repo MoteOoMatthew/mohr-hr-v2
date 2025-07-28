@@ -36,12 +36,16 @@ const cspConfig = isDevelopment
         directives: {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-          fontSrc: ["'self'", "https://fonts.gstatic.com"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
           imgSrc: ["'self'", "data:", "https:"],
-          connectSrc: ["'self'", "https://mohr-hr-v2.onrender.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com"], // Allow API calls to production and fonts
-        },
-      },
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+          upgradeInsecureRequests: []
+        }
+      }
     };
 
 app.use(helmet(cspConfig));
@@ -166,98 +170,42 @@ app.get('/api/health', (req, res) => {
 // Frontend serving logic
 const serveFrontend = () => {
   if (isDevelopment) {
-    // In development, try to proxy to Vite dev server, fallback to static files
+    // In development, proxy to Vite dev server
     const { createProxyMiddleware } = require('http-proxy-middleware');
-    
-    // Check if Vite dev server is running
-    const http = require('http');
-    const checkViteServer = () => {
-      return new Promise((resolve) => {
-        const req = http.request({
-          hostname: 'localhost',
-          port: 3001,
-          path: '/',
-          method: 'GET',
-          timeout: 1000
-        }, (res) => {
-          resolve(true);
-        });
-        
-        req.on('error', () => {
-          resolve(false);
-        });
-        
-        req.on('timeout', () => {
-          req.destroy();
-          resolve(false);
-        });
-        
-        req.end();
-      });
-    };
-    
-    // Try to proxy to Vite, fallback to static files
-    checkViteServer().then(viteRunning => {
-      if (viteRunning) {
-        console.log('🔧 Development mode: Frontend proxied to Vite dev server');
-        app.use('/', createProxyMiddleware({
-          target: 'http://localhost:3001',
-          changeOrigin: true,
-          ws: true, // Enable WebSocket proxy for HMR
-          logLevel: 'silent'
-        }));
-      } else {
-        console.log('⚠️  Vite dev server not running, serving static files');
-        serveStaticFiles();
-      }
-    }).catch(() => {
-      console.log('⚠️  Vite server check failed, serving static files');
-      serveStaticFiles();
-    });
+    app.use('/', createProxyMiddleware({
+      target: 'http://localhost:3001',
+      changeOrigin: true,
+      ws: true, // Enable WebSocket proxy for HMR
+      logLevel: 'silent'
+    }));
   } else {
     // In production, serve static files from backend/public
-    serveStaticFiles();
-  }
-};
-
-// Helper function to serve static files
-const serveStaticFiles = () => {
-  const publicPath = path.join(__dirname, 'public');
-  if (fs.existsSync(publicPath)) {
-    // Serve static files with proper MIME types
-    app.use(express.static(publicPath, {
-      setHeaders: (res, path) => {
-        if (path.endsWith('.css')) {
-          res.setHeader('Content-Type', 'text/css');
-        } else if (path.endsWith('.js')) {
-          res.setHeader('Content-Type', 'application/javascript');
-        } else if (path.endsWith('.svg')) {
-          res.setHeader('Content-Type', 'image/svg+xml');
-        }
-      }
-    }));
-    
-    // Catch all handler: send back React's index.html file
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(publicPath, 'index.html'));
-    });
-  } else {
-    // Fallback for API-only deployment
-    app.get('/', (req, res) => {
-      res.json({
-        message: 'MOHR HR System API V2',
-        version: '2.0.0',
-        status: 'running',
-        endpoints: {
-          health: '/api/health',
-          auth: '/api/auth',
-          users: '/api/users',
-          employees: '/api/employees',
-          leave: '/api/leave',
-          google: '/api/google'
-        }
+    const publicPath = path.join(__dirname, 'public');
+    if (fs.existsSync(publicPath)) {
+      app.use(express.static(publicPath));
+      
+      // Catch all handler: send back React's index.html file
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(publicPath, 'index.html'));
       });
-    });
+    } else {
+      // Fallback for API-only deployment
+      app.get('/', (req, res) => {
+        res.json({
+          message: 'MOHR HR System API V2',
+          version: '2.0.0',
+          status: 'running',
+          endpoints: {
+            health: '/api/health',
+            auth: '/api/auth',
+            users: '/api/users',
+            employees: '/api/employees',
+            leave: '/api/leave',
+            google: '/api/google'
+          }
+        });
+      });
+    }
   }
 };
 

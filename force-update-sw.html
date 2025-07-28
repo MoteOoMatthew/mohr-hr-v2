@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force Service Worker Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .success { background: #d1fae5; color: #059669; }
+        .error { background: #fee2e2; color: #dc2626; }
+        .info { background: #f3f4f6; color: #1f2937; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Force Service Worker Update</h1>
+        <p>This page will force update the service worker to the latest version.</p>
+        
+        <div id="status"></div>
+        
+        <button onclick="forceUpdate()">Force Update Service Worker</button>
+        <button onclick="clearAll()">Clear All Cache & Service Workers</button>
+        <button onclick="testApp()">Test Main Application</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function forceUpdate() {
+            showStatus('Forcing service worker update...', 'info');
+            
+            try {
+                if ('serviceWorker' in navigator) {
+                    // Unregister all existing service workers
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        addResult(`✅ Unregistered service worker: ${registration.scope}`, 'success');
+                    }
+                    
+                    // Clear all caches
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        await Promise.all(
+                            cacheNames.map(cacheName => caches.delete(cacheName))
+                        );
+                        addResult(`✅ Cleared ${cacheNames.length} caches`, 'success');
+                    }
+                    
+                    // Register new service worker
+                    const registration = await navigator.serviceWorker.register('/sw.js', {
+                        updateViaCache: 'none'
+                    });
+                    
+                    addResult(`✅ New service worker registered: ${registration.scope}`, 'success');
+                    
+                    // Force update
+                    await registration.update();
+                    addResult('✅ Service worker update triggered', 'success');
+                    
+                    showStatus('✅ Service worker updated successfully!', 'success');
+                } else {
+                    showStatus('ℹ️ Service Worker API not available', 'info');
+                }
+            } catch (error) {
+                addResult(`❌ Error: ${error.message}`, 'error');
+                showStatus(`❌ Update failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearAll() {
+            showStatus('Clearing all cache and service workers...', 'info');
+            
+            try {
+                // Clear service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                    addResult(`✅ Cleared ${registrations.length} service workers`, 'success');
+                }
+                
+                // Clear caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                    addResult(`✅ Cleared ${cacheNames.length} caches`, 'success');
+                }
+                
+                // Clear localStorage
+                localStorage.clear();
+                addResult('✅ Cleared localStorage', 'success');
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                addResult('✅ Cleared sessionStorage', 'success');
+                
+                showStatus('✅ All cache and storage cleared!', 'success');
+            } catch (error) {
+                addResult(`❌ Error: ${error.message}`, 'error');
+                showStatus(`❌ Clear failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testApp() {
+            window.open('http://localhost:5000', '_blank');
+        }
+
+        // Auto-run on page load
+        window.addEventListener('load', () => {
+            showStatus('🔍 Ready to force update service worker', 'info');
+        });
+    </script>
+</body>
+</html> 

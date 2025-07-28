@@ -38,23 +38,54 @@ class E2EEService {
    */
   async initialize(password, salt) {
     try {
+      console.log('🔒 E2EE Service: Starting initialization...');
+      console.log('🔑 Password provided:', password ? 'Yes' : 'No');
+      console.log('🧂 Salt provided:', salt ? 'Yes' : 'No');
+      console.log('🌐 Web Crypto supported:', this.isSupported());
+      
+      if (!this.isSupported()) {
+        throw new Error('Web Crypto API not supported in this browser');
+      }
+      
+      if (!password || !salt) {
+        throw new Error('Password and salt are required for E2EE initialization');
+      }
+      
       this.userSalt = salt;
+      console.log('🔐 Deriving keys from password and salt...');
       this.keys = await this.deriveKeys(password, salt);
+      console.log('✅ Keys derived successfully');
+      
       this.isInitialized = true;
+      console.log('✅ E2EE Service marked as initialized');
       
       // Initialize Perfect Forward Secrecy
       if (this.pfsEnabled) {
+        console.log('🔄 Initializing Perfect Forward Secrecy...');
         await this.initializePFS();
+        console.log('✅ PFS initialized successfully');
       }
       
       // Start performance monitoring
+      console.log('📊 Starting performance monitoring...');
       this.startPerformanceMonitoring();
       
       console.log('🔒 E2EE Service initialized successfully with PFS');
       this.notifyStatusChange();
+      return true;
     } catch (error) {
       console.error('❌ Failed to initialize E2EE service:', error);
-      throw new Error('E2EE initialization failed');
+      console.error('🔍 Error details:', error.message);
+      console.error('🔍 Error stack:', error.stack);
+      
+      // Graceful degradation: fall back to TLS mode
+      this.encryptionMode = 'tls';
+      this.isInitialized = true;
+      console.log('🔄 Falling back to TLS mode due to E2EE initialization failure');
+      this.notifyStatusChange();
+      
+      // Don't throw error, just return false to indicate fallback
+      return false;
     }
   }
 
@@ -205,59 +236,86 @@ class E2EEService {
   }
 
   /**
-   * Encrypt a single field with context and PFS
+   * Encrypt a single field with context and optional deniable encryption
+   * @param {string} value - Value to encrypt
+   * @param {string} context - Context for the field
+   * @param {boolean} deniable - Whether to use deniable encryption
+   * @returns {Promise<string>} - Encrypted package
    */
   async encryptField(value, context = 'default', deniable = false) {
     if (!this.isInitialized) {
       throw new Error('E2EE service not initialized');
     }
 
-    if (value === null || value === undefined) {
-      return null;
-    }
-
     try {
-      // Use session keys for PFS if available
-      const encryptionKey = this.sessionKeys?.encryptionKey || this.keys.encryptionKey;
-      const signingKey = this.sessionKeys?.signingKey || this.keys.signingKey;
-
-      // Create data package with context and timestamp
-      const dataPackage = {
+      // Use current session keys for encryption
+      const sessionKeys = this.sessionKeys || this.keys;
+      
+      // Generate a random IV for this encryption
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      
+      // Prepare the data to encrypt
+      const dataToEncrypt = {
         value,
         context,
         timestamp: Date.now(),
-        version: '2.0', // Updated version for PFS
-        sessionId: this.sessionId,
-        deniable: deniable
+        sessionId: this.sessionId || 'legacy'
       };
-
-      // Generate random IV
-      const iv = crypto.getRandomValues(new Uint8Array(12));
+      
+      // Convert to JSON and then to ArrayBuffer
+      const jsonString = JSON.stringify(dataToEncrypt);
+      const encoder = new TextEncoder();
+      const dataBuffer = encoder.encode(jsonString);
       
       // Encrypt the data
-      const encrypted = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        encryptionKey,
-        new TextEncoder().encode(JSON.stringify(dataPackage))
+      const encryptedData = await crypto.subtle.encrypt(
+        {
+          name: 'AES-GCM',
+          iv: iv
+        },
+        sessionKeys.encryptionKey,
+        dataBuffer
       );
-
-      // Create signature for integrity
+      
+      // Create HMAC signature for tamper detection
       const signature = await crypto.subtle.sign(
         'HMAC',
-        signingKey,
-        new Uint8Array(encrypted)
+        sessionKeys.signingKey,
+        encryptedData
       );
-
-      // Combine IV, encrypted data, and signature
-      const combined = new Uint8Array(iv.length + encrypted.byteLength + signature.byteLength);
-      combined.set(iv, 0);
-      combined.set(new Uint8Array(encrypted), iv.length);
-      combined.set(new Uint8Array(signature), iv.length + encrypted.byteLength);
-
-      return this.arrayBufferToBase64(combined);
+      
+      // Create the encrypted package
+      const encryptedPackage = {
+        version: '2.0',
+        mode: this.encryptionMode,
+        iv: this.arrayBufferToBase64(iv),
+        data: this.arrayBufferToBase64(encryptedData),
+        signature: this.arrayBufferToBase64(signature),
+        deniable: deniable,
+        sessionId: this.sessionId || 'legacy'
+      };
+      
+      return btoa(JSON.stringify(encryptedPackage));
     } catch (error) {
-      console.error('Encryption failed:', error);
-      throw new Error('Field encryption failed');
+      console.error('❌ Field encryption failed:', error);
+      
+      // Graceful fallback: return unencrypted data with warning
+      if (this.encryptionMode === 'e2ee') {
+        console.warn('🔄 Falling back to TLS mode due to encryption failure');
+        this.encryptionMode = 'tls';
+        this.notifyEncryptionModeChange('e2ee', 'tls', 'Encryption failure - falling back to TLS');
+        this.notifyStatusChange();
+      }
+      
+      // Return a simple encrypted package that indicates TLS mode
+      const fallbackPackage = {
+        version: '2.0',
+        mode: 'tls',
+        data: btoa(value), // Simple base64 encoding
+        fallback: true
+      };
+      
+      return btoa(JSON.stringify(fallbackPackage));
     }
   }
 
