@@ -1,4 +1,4 @@
-# MOHR HR V2 Production Build Script
+﻿# MOHR HR V2 Production Build Script
 Write-Host "Building MOHR HR V2 for Production..." -ForegroundColor Green
 
 # Set production environment
@@ -28,11 +28,11 @@ npm run build
 
 # Check if build was successful
 if (-not (Test-Path "dist")) {
-    Write-Host "❌ Frontend build failed!" -ForegroundColor Red
+    Write-Host " Frontend build failed!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✅ Frontend built successfully" -ForegroundColor Green
+Write-Host " Frontend built successfully" -ForegroundColor Green
 Set-Location ".."
 
 # Copy frontend build to backend for unified serving
@@ -50,11 +50,11 @@ Write-Host "Copying frontend build to backend..." -ForegroundColor Cyan
 Copy-Item -Path "$frontendDistPath/*" -Destination $backendPublicPath -Recurse -Force
 
 Write-Host ""
-Write-Host "✅ Production build completed!" -ForegroundColor Green
-Write-Host "📦 Frontend built and copied to backend/public" -ForegroundColor Cyan
-Write-Host "🚀 Ready for production deployment" -ForegroundColor Cyan
+Write-Host " Production build completed!" -ForegroundColor Green
+Write-Host " Frontend built and copied to backend/public" -ForegroundColor Cyan
+Write-Host " Ready for production deployment" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "To start production server:" -ForegroundColor Yellow
 Write-Host "   cd backend; npm start" -ForegroundColor White
 Write-Host ""
-Write-Host "Production server will serve both API and frontend from port 5000" -ForegroundColor Cyan 
+Write-Host "Production server will serve both API and frontend from port 5000" -ForegroundColor Cyan
